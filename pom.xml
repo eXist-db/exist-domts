@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.exist-db</groupId>
+    <artifactId>dom-ts</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>eXist-db W3C DOM Test Suite</name>
+    <description>W3C DOM Test Suite for eXist-db</description>
+    <url>https://www.github.com/exist-db/exist-domts</url>
+    <inceptionYear>2017</inceptionYear>
+
+    <organization>
+        <name>eXist-db</name>
+        <url>http://exist-db.org</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>adamretter</id>
+            <name>Adam Retter</name>
+            <url>http://www.adamretter.org.uk</url>
+            <organization>Evolved Binary</organization>
+            <organizationUrl>http://www.evolvedbinary.com</organizationUrl>
+            <email>adam@evolvedbinary.com</email>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>The BSD 3-Clause License</name>
+            <url>http://www.opensource.org/licenses/BSD-3-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://www.github.com/exist-db/exist-domts.git</connection>
+        <developerConnection>scm:git:https://www.github.com/exist-db/exist-domts.git</developerConnection>
+        <url>scm:git:https://www.github.com/exist-db/exist-domts.git</url>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.source>1.8</project.build.source>
+        <project.build.target>1.8</project.build.target>
+
+        <w3c.domts.version>20040405</w3c.domts.version>
+        <w3c.domts.output.sources>${project.build.directory}/generated-sources/w3c-domts-core</w3c.domts.output.sources>
+        <w3c.domts.output.resources>${project.build.directory}/generated-resources/w3c-domts-core</w3c.domts.output.resources>
+
+        <exist.version>3.3.0</exist.version>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>compile</scope>  <!-- required by W3C DOM Test Suite -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.exist-db</groupId>
+            <artifactId>exist-core</artifactId>
+            <version>${exist.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.exist-db</groupId>
+            <artifactId>exist-testkit</artifactId>
+            <version>${exist.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+        <plugins>
+
+            <!-- START: download and extract the DOM Test Suite code from the W3C -->
+            <plugin>
+                <groupId>com.universalmediaserver</groupId>
+                <artifactId>external-maven-plugin</artifactId>
+                <version>0.2</version>
+                <executions>
+                    <execution>
+                        <id>resolve-external-w3c-domts-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>install</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactItems>
+                        <artifactItem>
+                            <groupId>org.w3c.dom.ts</groupId>
+                            <artifactId>dom1-core-tests</artifactId>
+                            <version>${w3c.domts.version}</version>
+                            <downloadUrl>https://www.w3.org/2004/04/dom1-core-tests-20040405.jar</downloadUrl>
+                            <packaging>jar</packaging>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>org.w3c.dom.ts</groupId>
+                            <artifactId>dom2-core-tests</artifactId>
+                            <version>${w3c.domts.version}</version>
+                            <downloadUrl>https://www.w3.org/2004/04/dom2-core-tests-20040405.jar</downloadUrl>
+                            <packaging>jar</packaging>
+                        </artifactItem>
+                        <artifactItem>
+                            <groupId>org.w3c.dom.ts</groupId>
+                            <artifactId>dom3-core-tests</artifactId>
+                            <version>${w3c.domts.version}</version>
+                            <downloadUrl>https://www.w3.org/2004/04/dom3-core-tests-20040405.jar</downloadUrl>
+                            <packaging>jar</packaging>
+                        </artifactItem>
+                    </artifactItems>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>unpack-w3c-domts-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+
+                                <artifactItem>
+                                    <groupId>org.w3c.dom.ts</groupId>
+                                    <artifactId>dom1-core-tests</artifactId>
+                                    <version>${w3c.domts.version}</version>
+                                    <outputDirectory>${w3c.domts.output.sources}</outputDirectory>
+                                    <excludes>**/*.class,**/*.xml,**/html/,META-INF/,junit/,org/w3c/domts/level2/,org/w3c/domts/level3/,**/*Batik*,**/*DOM4J*,**/*JTidy*,**/*LS*,**/*Xalan*,**/*Xerces*,**/*Crimson*,**/*GNUJAXP*,**/*Oracle*</excludes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.w3c.dom.ts</groupId>
+                                    <artifactId>dom1-core-tests</artifactId>
+                                    <version>${w3c.domts.version}</version>
+                                    <outputDirectory>${w3c.domts.output.resources}</outputDirectory>
+                                    <excludes>build.xml</excludes>
+                                    <includes>*.xml,*.svg,*.xhtml,*.xsd,*.dtd,*.ent,*.js,Yes</includes>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>org.w3c.dom.ts</groupId>
+                                    <artifactId>dom2-core-tests</artifactId>
+                                    <version>${w3c.domts.version}</version>
+                                    <outputDirectory>${w3c.domts.output.sources}</outputDirectory>
+                                    <excludes>**/*.class,**/build.xml,**/html/,META-INF/,junit/,org/w3c/domts/level1/,org/w3c/domts/level3/,**/*Batik*,**/*DOM4J*,**/*JTidy*,**/*LS*,**/*Xalan*,**/*Xerces*,**/*Crimson*,**/*GNUJAXP*,**/*Oracle*</excludes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.w3c.dom.ts</groupId>
+                                    <artifactId>dom2-core-tests</artifactId>
+                                    <version>${w3c.domts.version}</version>
+                                    <outputDirectory>${w3c.domts.output.resources}</outputDirectory>
+                                    <excludes>build.xml</excludes>
+                                    <includes>*.xml,*.svg,*.xhtml,*.xsd,*.dtd,*.ent,*.js,Yes</includes>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>org.w3c.dom.ts</groupId>
+                                    <artifactId>dom3-core-tests</artifactId>
+                                    <version>${w3c.domts.version}</version>
+                                    <outputDirectory>${w3c.domts.output.sources}</outputDirectory>
+                                    <excludes>**/*.class,**/build.xml,**/html/,META-INF/,junit/,org/w3c/domts/level1/,org/w3c/domts/level2/,org/w3c/dom/,**/*Batik*,**/*DOM4J*,**/*JTidy*,**/*LS*,**/*Xalan*,**/*Xerces*,**/*Crimson*,**/*GNUJAXP*,**/*Oracle*</excludes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.w3c.dom.ts</groupId>
+                                    <artifactId>dom3-core-tests</artifactId>
+                                    <version>${w3c.domts.version}</version>
+                                    <outputDirectory>${w3c.domts.output.resources}</outputDirectory>
+                                    <excludes>build.xml</excludes>
+                                    <includes>*.xml,*.svg,*.xhtml,*.xsd,*.dtd,*.ent,*.js,Yes</includes>
+                                </artifactItem>
+
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-w3c-domts-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${w3c.domts.output.sources}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-w3c-domts-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>${w3c.domts.output.resources}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-patch-plugin</artifactId>
+                <version>1.2</version>
+                <configuration>
+                    <targetDirectory>${w3c.domts.output.sources}</targetDirectory>
+                    <patches>
+                        <patch>junit-no-swing.patch</patch>
+                    </patches>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>patch</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>apply</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- END: download and extract the DOM Test Suite code from the W3C -->
+
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <header>com/mycila/maven/plugin/license/templates/BSD-3.txt</header>
+                    <failIfMissing>true</failIfMissing>
+                    <aggregate>true</aggregate>
+                    <strictCheck>true</strictCheck>
+                    <properties>
+                        <owner>${project.organization.name}</owner>
+                        <organisation>${project.organization.name}</organisation>
+                        <email>exit-open@lists.sourceforge.net</email>
+                        <url>${project.organization.url}</url>
+                    </properties>
+                    <excludes>
+                        <exclude>pom.xml</exclude>
+                        <exclude>README.md</exclude>
+                        <exclude>LICENSE</exclude>
+                        <exclude>src/main/patches/*</exclude>
+                        <exclude>src/test/resources/conf.xml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <source>${project.build.source}</source>
+                    <target>${project.build.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.20</version>
+                <configuration>
+                    <executions>
+                        <execution>
+                            <id>report-after-test</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <repositories>
+        <repository>
+            <id>exist</id>
+            <url>https://raw.github.com/eXist-db/mvn-repo/master/</url>
+        </repository>
+    </repositories>
+
+</project>
