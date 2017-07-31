@@ -1,49 +1,75 @@
-package org.exist.dom.persistent;
+/**
+ * Copyright © 2017, eXist-db
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <organization> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package org.exist.dom.memtree;
 
-import org.exist.EXistException;
-import org.exist.collections.Collection;
-import org.exist.collections.IndexInfo;
-import org.exist.security.PermissionDeniedException;
-import org.exist.storage.BrokerPool;
-import org.exist.storage.DBBroker;
-import org.exist.storage.txn.Txn;
-import org.exist.util.FileUtils;
-import org.exist.util.LockException;
-import org.exist.util.MimeTable;
-import org.exist.util.MimeType;
-import org.exist.xmldb.XmldbURI;
+import org.exist.Namespaces;
+import org.exist.util.*;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
-import org.w3c.domts.*;
+import org.w3c.domts.DOMTestDocumentBuilderFactory;
+import org.w3c.domts.DOMTestIncompatibleException;
+import org.w3c.domts.DOMTestLoadException;
+import org.w3c.domts.DocumentBuilderSetting;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
+import org.xml.sax.ext.EntityResolver2;
 
+import javax.xml.parsers.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFactory {
 
-    private final BrokerPool brokerPool;
-    private final MimeTable mimeTable;
-    private final XmldbURI collectionUri;
     private final DOMImplementation domImplementation;
+    private final SAXParserFactory saxParserFactory;
 
-    public ExistTestDocumentBuilderFactory(final BrokerPool brokerPool, final XmldbURI collectionUri, final DocumentBuilderSetting[] settings)
+    public ExistTestDocumentBuilderFactory(final DocumentBuilderSetting[] settings)
             throws DOMTestIncompatibleException {
         super(settings);
-        this.brokerPool = brokerPool;
-        this.mimeTable = MimeTable.getInstance();
-        this.collectionUri = collectionUri;
-        this.domImplementation = new PersistentDOMImplementation();
+        this.domImplementation = new MemtreeDOMImplementation();
+        this.saxParserFactory = ExistSAXParserFactory.getSAXParserFactory();
 
-        //TODO(AR) process settings
+        saxParserFactory.setNamespaceAware(true);
+
+        // TODO(AR) set settings
+//        if (settings != null) {
+//            for (int i = 0; i < settings.length; i++) {
+//                settings[i].applySetting(saxParserFactory);
+//            }
+//        }
     }
 
     @Override
@@ -53,7 +79,7 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
             return this;
         }
         final DocumentBuilderSetting[] mergedSettings = mergeSettings(newSettings);
-        return new ExistTestDocumentBuilderFactory(brokerPool, collectionUri, mergedSettings);
+        return new ExistTestDocumentBuilderFactory(mergedSettings);
     }
 
     @Override
@@ -63,48 +89,25 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
 
     @Override
     public Document load(final URL url) throws DOMTestLoadException {
-        try (final DBBroker broker = brokerPool.get(Optional.of(brokerPool.getSecurityManager().getSystemSubject()));
-             final Txn transaction = brokerPool.getTransactionManager().beginTransaction()) {
+        try {
+            final SAXAdapter saxAdapter = new SAXAdapter();
 
-            final Collection collection = broker.getOrCreateCollection(transaction, collectionUri);
-            broker.saveCollection(transaction, collection);
+            final SAXParser saxParser = saxParserFactory.newSAXParser();
+            final XMLReader xmlReader = saxParser.getXMLReader();
+            xmlReader.setContentHandler(saxAdapter);
+            xmlReader.setProperty(Namespaces.SAX_LEXICAL_HANDLER, saxAdapter);
+            xmlReader.setEntityResolver(new LocalEntityResolver());
 
-            final String fileName = FileUtils.fileName(Paths.get(url.toURI()));
-            final XmldbURI name = XmldbURI.create(fileName);
-            final MimeType mimeType = mimeTable.getContentTypeFor(fileName);
+            try (final InputStream is = url.openStream()) {
+                final Path path = Paths.get(url.toURI());
+                final InputSource src = new InputSource(is);
+                src.setSystemId(path.toUri().toString());
 
+                xmlReader.parse(src);
 
-            final Document document;
-            if(mimeType.isXMLType()) {
-                // xml document
-                try(final InputStream vis = url.openStream()) {
-                    final InputSource visrc = new InputSource(vis);
-                    visrc.setSystemId(fileName);
-
-                    final IndexInfo indexInfo = collection.validateXMLResource(transaction, broker, name, visrc);
-
-                    try(final InputStream sis = url.openStream()) {
-                        final InputSource sisrc = new InputSource(sis);
-                        sisrc.setSystemId(fileName);
-
-                        collection.store(transaction, broker, indexInfo, sisrc);
-
-                        document = broker.getXMLResource(collectionUri.append(name));
-                    }
-                }
-
-            } else {
-                // binary document
-                try (final InputStream is = url.openStream()) {
-                    document = collection.addBinaryResource(transaction, broker, name, is, mimeType.getName(), -1);
-                }
+                return saxAdapter.getDocument();
             }
-
-            transaction.commit();
-
-            return document;
-
-        } catch (final EXistException | LockException | PermissionDeniedException | SAXException | IOException | URISyntaxException e) {
+        } catch (final ParserConfigurationException | SAXException | IOException | URISyntaxException e) {
             throw new DOMTestLoadException(e);
         }
     }
@@ -119,15 +122,9 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
             return ("1.0".equals(version) || "2.0".equals(version));
         }
 
-        try (final DBBroker broker = brokerPool.get(Optional.of(brokerPool.getSecurityManager().getSystemSubject()))) {
-            final XMLReader reader = broker.getBrokerPool().getParserPool().borrowXMLReader();
-
-            try {
-                return reader.getFeature(feature);
-            } finally {
-                broker.getBrokerPool().getParserPool().returnXMLReader(reader);
-            }
-        } catch (final EXistException | SAXException e) {
+        try {
+            return saxParserFactory.getFeature(feature);
+        } catch (final ParserConfigurationException | SAXException e) {
             e.printStackTrace();
             return false;
         }
@@ -158,26 +155,54 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
         return false;
     }
 
-    private class PersistentDOMImplementation implements DOMImplementation {
+    private class MemtreeDOMImplementation implements DOMImplementation {
 
         @Override
         public DocumentType createDocumentType(final String qualifiedName, final String publicId, final String systemId) throws DOMException {
-            return new DocumentTypeImpl(qualifiedName, publicId, systemId); // TODO(AR) is this okay?
-        }
-
-        @Override
-        public Document createDocument(final String namespaceURI, final String qualifiedName, final DocumentType doctype) throws DOMException {
             return null; // TODO(AR) eXist does not yet implement this
         }
 
         @Override
-        public Object getFeature(String feature, String version) {
-            return null;
+        public Document createDocument(final String namespaceURI, final String qualifiedName, final DocumentType doctype) throws DOMException {
+            return new DocumentImpl(null, true);    // TODO(AR) is this okay?
+        }
+
+        @Override
+        public Object getFeature(final String feature, final String version) {
+            return _hasFeature(feature, version);
         }
 
         @Override
         public boolean hasFeature(final String feature, final String version) {
             return _hasFeature(feature, version);
+        }
+    }
+
+    private class LocalEntityResolver implements EntityResolver2 {
+
+        @Override
+        public InputSource getExternalSubset(final String name, final String baseURI) throws SAXException, IOException {
+            return null;
+        }
+
+        @Override
+        public InputSource resolveEntity(final String name, final String publicId, final String baseURI, final String systemId) throws SAXException, IOException {
+            try {
+                final Path path = Paths.get(new URI(baseURI)).resolveSibling(systemId);
+                final InputStream is = Files.newInputStream(path);
+
+                final InputSource src = new InputSource(is);
+                src.setSystemId(path.toUri().toString());
+
+                return src;
+            } catch (final URISyntaxException e) {
+                throw new IOException(e);
+            }
+        }
+
+        @Override
+        public InputSource resolveEntity(final String publicId, final String systemId) throws SAXException, IOException {
+            return null;
         }
     }
 }
