@@ -1,0 +1,13 @@
+--- org/w3c/domts/DOMTestCase.java	2017-08-07 12:18:15.000000000 -0400
++++ org/w3c/domts/DOMTestCase.java	2017-08-07 12:19:17.000000000 -0400
+@@ -76,9 +76,8 @@
+       //
+       //   find and call its execute method method
+       //
+-      Class argsClass = loader.loadClass("[Ljava.lang.String;");
+       Method execMethod =
+-          runnerClass.getMethod("execute", new Class[] {argsClass});
++          runnerClass.getMethod("execute", new Class[] {String[].class});
+       execMethod.invoke(junitRun, new Object[] {args});
+     }
+     catch (InvocationTargetException ex) {

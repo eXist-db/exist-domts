@@ -236,6 +236,7 @@
                     <targetDirectory>${w3c.domts.output.sources}</targetDirectory>
                     <patches>
                         <patch>junit-no-swing.patch</patch>
+                        <patch>dom-test-case-reflection.patch</patch>
                     </patches>
                 </configuration>
                 <executions>
