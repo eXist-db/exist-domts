@@ -33,19 +33,14 @@ import org.exist.security.PermissionDeniedException;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
 import org.exist.storage.txn.Txn;
-import org.exist.util.FileUtils;
-import org.exist.util.LockException;
-import org.exist.util.MimeTable;
-import org.exist.util.MimeType;
+import org.exist.util.*;
 import org.exist.xmldb.XmldbURI;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
 import org.w3c.domts.*;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
+import org.xml.sax.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +48,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Optional;
+
+import static org.apache.xerces.impl.Constants.*;
+import static org.apache.xerces.jaxp.JAXPConstants.JAXP_SCHEMA_LANGUAGE;
+import static org.apache.xerces.jaxp.JAXPConstants.W3C_XML_SCHEMA;
 
 public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFactory {
 
@@ -69,12 +68,7 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
         this.collectionUri = collectionUri;
         this.domImplementation = new PersistentDOMImplementation();
 
-        // TODO(AR) set settings
-//        if (settings != null) {
-//            for (int i = 0; i < settings.length; i++) {
-//                settings[i].applySetting(saxParserFactory);
-//            }
-//        }
+        //settings are set in #load(url)
     }
 
     @Override
@@ -112,15 +106,27 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
                     final InputSource visrc = new InputSource(vis);
                     visrc.setSystemId(fileName);
 
-                    final IndexInfo indexInfo = collection.validateXMLResource(transaction, broker, name, visrc);
+                    XMLReader reader = null;
+                    try {
+                        reader = broker.getBrokerPool().getParserPool().borrowXMLReader();
+                        setSettings(reader);
+                        collection.setReader(reader);
 
-                    try(final InputStream sis = url.openStream()) {
-                        final InputSource sisrc = new InputSource(sis);
-                        sisrc.setSystemId(fileName);
+                        final IndexInfo indexInfo = collection.validateXMLResource(transaction, broker, name, visrc);
 
-                        collection.store(transaction, broker, indexInfo, sisrc);
+                        try (final InputStream sis = url.openStream()) {
+                            final InputSource sisrc = new InputSource(sis);
+                            sisrc.setSystemId(fileName);
 
-                        document = broker.getXMLResource(collectionUri.append(name));
+                            collection.store(transaction, broker, indexInfo, sisrc);
+
+                            document = broker.getXMLResource(collectionUri.append(name));
+                        }
+                    } finally {
+                        collection.setReader(null);
+                        if(reader != null) {
+                            broker.getBrokerPool().getParserPool().returnXMLReader(reader);
+                        }
                     }
                 }
 
@@ -135,8 +141,67 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
 
             return document;
 
-        } catch (final EXistException | LockException | PermissionDeniedException | SAXException | IOException | URISyntaxException e) {
+        } catch (final EXistException | LockException | PermissionDeniedException | SAXException | IOException | URISyntaxException | DOMTestIncompatibleException e) {
             throw new DOMTestLoadException(e);
+        }
+    }
+
+    private void setSettings(final XMLReader reader) throws SAXNotRecognizedException, SAXNotSupportedException, DOMTestIncompatibleException {
+        for(final DocumentBuilderSetting setting : getActualSettings()) {
+
+            switch(setting.getProperty()) {
+                case "coalescing":
+                    //TODO(AR) need to do something here
+//                    reader.setFeature(XERCES_FEATURE_PREFIX + CREATE_CDATA_NODES_FEATURE, setting.getValue());
+                    break;
+
+                case "expandEntityReferences":
+                    //TODO(AR) need to do something here
+//                    reader.setFeature(XERCES_FEATURE_PREFIX + CREATE_ENTITY_REF_NODES_FEATURE, setting.getValue());
+                    break;
+
+                case "ignoringElementContentWhitespace":
+                    //TODO(AR) need to do something here
+//                    reader.setFeature(XERCES_FEATURE_PREFIX + INCLUDE_IGNORABLE_WHITESPACE, !setting.getValue());
+                    break;
+
+                case "namespaceAware":
+                    reader.setFeature(SAX_FEATURE_PREFIX + NAMESPACES_FEATURE, setting.getValue());
+                    break;
+
+                case "validating":
+                    reader.setFeature(SAX_FEATURE_PREFIX + VALIDATION_FEATURE, setting.getValue());
+                    break;
+
+                case "signed":
+                    if (!setting.getValue()) {
+                        throw new DOMTestIncompatibleException(null, DocumentBuilderSetting.notSigned);
+                    }
+                    break;
+
+                case "hasNullString":
+                    if (!setting.getValue()) {
+                        throw new DOMTestIncompatibleException(null, DocumentBuilderSetting.notHasNullString);
+                    }
+                    break;
+
+                case "schemaValidating":
+                    if(setting.getValue()) {
+                        reader.setFeature(SAX_FEATURE_PREFIX + NAMESPACES_FEATURE, true);
+                        reader.setFeature(SAX_FEATURE_PREFIX + VALIDATION_FEATURE, true);
+                        reader.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+
+                        XMLReaderObjectFactory.setReaderValidationMode(XMLReaderObjectFactory.VALIDATION_SETTING.ENABLED, reader);
+                    } else {
+                        reader.setProperty(JAXP_SCHEMA_LANGUAGE, "http://www.w3.org/TR/REC-xml");
+                    }
+
+                    break;
+
+                case "ignoringComments":
+                    reader.setFeature(SAX_FEATURE_PREFIX + INCLUDE_COMMENTS_FEATURE, !setting.getValue());
+                    break;
+            }
         }
     }
 
@@ -146,8 +211,8 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
     }
 
     private boolean _hasFeature(final String feature, final String version) {
-        if("XML".equals(feature)) {
-            return ("1.0".equals(version) || "2.0".equals(version));
+        if("Core".equalsIgnoreCase(feature) || "XML".equalsIgnoreCase(feature)) {
+            return (version.isEmpty() || "1.0".equals(version) || "2.0".equals(version) || "3.0".equals(version));
         }
 
         try (final DBBroker broker = brokerPool.get(Optional.of(brokerPool.getSecurityManager().getSystemSubject()))) {
