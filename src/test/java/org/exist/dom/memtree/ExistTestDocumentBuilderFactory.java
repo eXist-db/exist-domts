@@ -119,7 +119,7 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
 
     private boolean _hasFeature(final String feature, final String version) {
         if("Core".equalsIgnoreCase(feature) || "XML".equalsIgnoreCase(feature)) {
-            return (version.isEmpty() || "1.0".equals(version) || "2.0".equals(version) || "3.0".equals(version));
+            return (version == null || version.isEmpty() || "1.0".equals(version) || "2.0".equals(version) || "3.0".equals(version));
         }
 
         try {
