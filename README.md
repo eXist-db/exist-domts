@@ -16,16 +16,16 @@ The report can then be found in `target/site/target/site/surefire-report.html`.
 
 # Results
 
-## eXist-db 201708081936-SNAPSHOT from [adamretter/exist/tree/bugfix/dom](https://github.com/adamretter/exist/tree/bugfix/dom)
+## eXist-db 201708121317-SNAPSHOT from [adamretter/exist/tree/bugfix/dom](https://github.com/adamretter/exist/tree/bugfix/dom)
 
 | Test Suite                | Tests | Errors | Failures | Skipped | Success Rate | Time (s) |
 |---------------------------|-------|--------|----------|---------|--------------|----------|
-| Level 1 Core (Memtree)    | 513   | 262    | 106      | 0       | 28.265%      | 1.321    |
-| Level 2 Core (Memtree)    | 282   | 149    | 70       | 0       | 22.34%       | 0.461    |
-| Level 3 Core (Memtree)    | 717   | 603    | 51       | 0       | 8.787%       | 0.943    |
-| Level 1 Core (Persistent) | 513   | 275    | 52       | 0       | 36.257%      | 2.02     |
-| Level 2 Core (Persistent) | 282   | 123    | 79       | 0       | 28.369%      | 0.861    |
-| Level 3 Core (Persistent) | 717   | 630    | 21       | 0       | 9.205%       | 1.717    |
+| Level 1 Core (Memtree)    | 527   | 266    | 110      | 0       | 28.653%      | 1.115    |
+| Level 2 Core (Memtree)    | 282   | 163    | 69       | 0       | 26.241%      | 0.456    |
+| Level 3 Core (Memtree)    | 722   | 604    | 54       | 0       | 8.864%       | 0.861    |
+| Level 1 Core (Persistent) | 527   | 279    | 61       | 0       | 35.484%      | 2.206    |
+| Level 2 Core (Persistent) | 282   | 116    | 81       | 0       | 30.142%      | 0.817    |
+| Level 3 Core (Persistent) | 722   | 624    | 28       | 0       | 9.695%       | 1.407    |
 
 ## eXist-db 3.3.0
 
