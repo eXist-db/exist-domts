@@ -53,7 +53,7 @@
         <w3c.domts.output.sources>${project.build.directory}/generated-sources/w3c-domts-core</w3c.domts.output.sources>
         <w3c.domts.output.resources>${project.build.directory}/generated-resources/w3c-domts-core</w3c.domts.output.resources>
 
-        <exist.version>201708121317-SNAPSHOT</exist.version>
+        <exist.version>3.6.0</exist.version>
     </properties>
 
     <dependencies>
@@ -322,6 +322,10 @@
         <repository>
             <id>exist</id>
             <url>https://raw.github.com/eXist-db/mvn-repo/master/</url>
+        </repository>
+        <repository>
+            <id>spring-milestones</id> <!-- needed for AspectJ 1.9.0.RC1 -->
+            <url>http://repo.spring.io/milestone/</url>
         </repository>
     </repositories>
 

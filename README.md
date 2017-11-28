@@ -16,7 +16,7 @@ The report can then be found in `target/site/target/site/surefire-report.html`.
 
 # Results
 
-## eXist-db 201708121317-SNAPSHOT from [adamretter/exist/tree/bugfix/dom](https://github.com/adamretter/exist/tree/bugfix/dom)
+## eXist-db 3.6.0
 
 | Test Suite                | Tests | Errors | Failures | Skipped | Success Rate | Time (s) |
 |---------------------------|-------|--------|----------|---------|--------------|----------|
