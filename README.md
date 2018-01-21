@@ -12,7 +12,7 @@ or if you want a HTML report of the test results:
 $ mvn clean site
 ```
 
-The report can then be found in `target/site/target/site/surefire-report.html`.
+The report can then be found in `target/site/surefire-report.html`.
 
 # Results
 
