@@ -16,6 +16,17 @@ The report can then be found in `target/site/target/site/surefire-report.html`.
 
 # Results
 
+## eXist-db 3.6.1
+
+| Test Suite                | Tests | Errors | Failures | Skipped | Success Rate | Time (s) |
+|---------------------------|-------|--------|----------|---------|--------------|----------|
+| Level 1 Core (Memtree)    | 527   | 266    | 110      | 0       | 28.653%      | 1.115    |
+| Level 2 Core (Memtree)    | 282   | 163    | 69       | 0       | 26.241%      | 0.456    |
+| Level 3 Core (Memtree)    | 722   | 604    | 54       | 0       | 8.864%       | 0.861    |
+| Level 1 Core (Persistent) | 527   | 279    | 61       | 0       | 35.484%      | 2.206    |
+| Level 2 Core (Persistent) | 282   | 116    | 81       | 0       | 30.142%      | 0.817    |
+| Level 3 Core (Persistent) | 722   | 624    | 28       | 0       | 9.695%       | 1.407    |
+
 ## eXist-db 3.6.0
 
 | Test Suite                | Tests | Errors | Failures | Skipped | Success Rate | Time (s) |
