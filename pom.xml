@@ -96,7 +96,7 @@
             <plugin>
                 <groupId>com.universalmediaserver</groupId>
                 <artifactId>external-maven-plugin</artifactId>
-                <version>0.2</version>
+                <version>0.3</version>
                 <executions>
                     <execution>
                         <id>resolve-external-w3c-domts-sources</id>
