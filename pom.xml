@@ -53,7 +53,7 @@
         <w3c.domts.output.sources>${project.build.directory}/generated-sources/w3c-domts-core</w3c.domts.output.sources>
         <w3c.domts.output.resources>${project.build.directory}/generated-resources/w3c-domts-core</w3c.domts.output.resources>
 
-        <exist.version>5.3.0-SNAPSHOT</exist.version>
+        <exist.version>5.2.0</exist.version>
     </properties>
 
     <dependencies>
