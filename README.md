@@ -1,5 +1,7 @@
 # W3C DOM Test Suite for eXist-db
 
+![Java CI](https://github.com/eXist-db/exist-domts/workflows/Java%20CI/badge.svg)
+
 To execute:
 
 ```bash
