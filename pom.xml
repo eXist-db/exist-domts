@@ -53,7 +53,7 @@
         <w3c.domts.output.sources>${project.build.directory}/generated-sources/w3c-domts-core</w3c.domts.output.sources>
         <w3c.domts.output.resources>${project.build.directory}/generated-resources/w3c-domts-core</w3c.domts.output.resources>
 
-        <exist.version>4.7.0</exist.version>
+        <exist.version>5.3.0-SNAPSHOT</exist.version>
     </properties>
 
     <dependencies>
@@ -68,13 +68,6 @@
         <dependency>
             <groupId>org.exist-db</groupId>
             <artifactId>exist-core</artifactId>
-            <version>${exist.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.exist-db</groupId>
-            <artifactId>exist-testkit</artifactId>
             <version>${exist.version}</version>
             <scope>test</scope>
         </dependency>
@@ -303,7 +296,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.1</version>
             </plugin>
 
         </plugins>
@@ -314,7 +307,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M4</version>
+                <version>3.0.0-M5</version>
                 <configuration>
                     <executions>
                         <execution>
@@ -332,12 +325,26 @@
 
     <repositories>
         <repository>
-            <id>exist</id>
-            <url>https://raw.github.com/eXist-db/mvn-repo/master/</url>
+            <id>exist-db-snapshots</id>
+            <name>Evolved Binary - eXist-db Snapshots</name>
+            <url>https://repo.evolvedbinary.com/repository/exist-db-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
         <repository>
-            <id>spring-milestones</id> <!-- needed for AspectJ 1.9.0.RC1 -->
-            <url>http://repo.spring.io/milestone/</url>
+            <id>exist-db</id>
+            <name>Evolved Binary - eXist-db Releases</name>
+            <url>https://repo.evolvedbinary.com/repository/exist-db/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

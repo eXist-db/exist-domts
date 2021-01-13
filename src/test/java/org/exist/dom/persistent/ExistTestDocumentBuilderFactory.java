@@ -110,7 +110,6 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
                     try {
                         reader = broker.getBrokerPool().getParserPool().borrowXMLReader();
                         setSettings(reader);
-                        collection.setReader(reader);
 
                         final IndexInfo indexInfo = collection.validateXMLResource(transaction, broker, name, visrc);
 
@@ -123,7 +122,6 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
                             document = broker.getXMLResource(collectionUri.append(name));
                         }
                     } finally {
-                        collection.setReader(null);
                         if(reader != null) {
                             broker.getBrokerPool().getParserPool().returnXMLReader(reader);
                         }
