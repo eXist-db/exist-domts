@@ -137,7 +137,7 @@ public class ExistTestDocumentBuilderFactory extends DOMTestDocumentBuilderFacto
 
     @Override
     public boolean isExpandEntityReferences() {
-        return false;
+        return true;
     }
 
     @Override
